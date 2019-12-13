@@ -8,6 +8,7 @@ import org.bdp4j.transformers.Enum2IntTransformer;
 import org.bdp4j.types.Instance;
 import org.bdp4j.types.Transformer;
 import org.bdp4j.util.InstanceListUtils;
+import org.bdp4j.types.Dataset;
 
 import org.bdp4j.*;
 
@@ -39,9 +40,9 @@ public class App
         Map<String, Transformer> transformersList = new HashMap<>();
         transformersList.put("target", new Enum2IntTransformer(targetValues));
 
-        Instances data = (new CSVDatasetReader(/*direccion fichero*/, transformersList)).loadFile().getWekaDataset();
-        System.out.println(data.toString());
-        
+        String filePath = "ultimo_outputsyns_100.csv";
+        CSVDatasetReader fileDataSet = new CSVDatasetReader(filePath, transformersList);
+        Dataset originalDataset = fileDataSet.loadFile();        
     }
 
 }
