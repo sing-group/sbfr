@@ -1,6 +1,7 @@
 package SBFR;
 
 //import types.CachedBabelUtils;
+import java.util.concurrent.*;
 import org.bdp4j.dataset.CSVDatasetReader;
 import org.bdp4j.pipe.AbstractPipe;
 import org.bdp4j.pipe.SerialPipes;
@@ -113,7 +114,7 @@ public class App
         }
 
         save(cachedBabelUtils.getMapOfHypernyms());
-		System.out.println("Save elements: " + cachedBabelUtils.getMapOfHypernyms().size());
+		System.out.println("Saved elements: " + cachedBabelUtils.getMapOfHypernyms().size());
         
     }
 
@@ -155,7 +156,7 @@ public class App
                 if (s1Father == s2Father) {
                     String expressionS1 = "(" + s1 + " >= 1) ? 1 : 0";
                     String expressionS2 = "(" + s2 + " >= 1) ? 1 : 0";
-                    
+
                     Map<String, Integer> result1 = originalDataset.evaluateColumns(expressionS1,
                         int.class, 
                         new String[]{s1}, 
@@ -170,16 +171,20 @@ public class App
                          
                     //Results from evaluating these synsets
                     System.out.print("Synset 1: " + s1 + " -> " + result1);
-                    System.out.println("Synset 2: "+ s2 + " -> " + result2);
+                    System.out.println(" Synset 2: "+ s2 + " -> " + result2);
 
                 }
             }
         }
     }
 
-
+    /* NOTE! The first time you run this with a dataset should be slower than subsequent ones.
+        This is due to the creation of the cached hypernyms map
+    */
     public static void main( String[] args )
     {
+        long startTime = System.currentTimeMillis();
+
         Map<String, Integer> targetValues = new HashMap<>();
         targetValues.put("ham", 0);
         targetValues.put("spam", 1);
@@ -207,6 +212,8 @@ public class App
 
         evaluate(originalDataset, synsetList, cachedHypernyms);
 
+        long endTime = System.currentTimeMillis();
+        System.out.println("Execution time in milliseconds: " + (endTime - startTime));
     }
 
 }
