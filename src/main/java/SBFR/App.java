@@ -58,7 +58,7 @@ public class App
     //Map used to save the hypernyms to which synset pairs will generalize
     static Map<String, String> generalizeTo = new HashMap<String, String>(); 
     //Max relationship degree that we will admit 
-    static int maxDegree = 3;
+    static int maxDegree = 2;
 
     /**
      * 
@@ -269,7 +269,9 @@ public class App
                 }
                 usedSynsets.add(s1);
             }
-            finalResult.put(s1, s2List);
+            if (s2List.size() > 0){
+                finalResult.put(s1, s2List);
+            }
         }
 
         return finalResult;
