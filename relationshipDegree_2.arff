@@ -1,0 +1,62 @@
+
+@relation dataset
+
+@attribute id string
+@attribute length numeric
+@attribute language-reliability numeric
+@attribute polarity numeric
+@attribute word-counter numeric
+@attribute synset-counter numeric
+@attribute sit numeric
+@attribute synsetPolarity numeric
+@attribute bn:00093430v numeric
+@attribute bn:00054316n numeric
+@attribute bn:00007731n numeric
+@attribute bn:00052061n numeric
+@attribute bn:00029424n numeric
+@attribute bn:00090408v numeric
+@attribute bn:00056068n numeric
+@attribute bn:00114778r numeric
+@attribute bn:00084231v numeric
+@attribute bn:00036188n numeric
+@attribute bn:00110606a numeric
+@attribute bn:13674300v numeric
+@attribute bn:00114491r numeric
+@attribute bn:00004222n numeric
+@attribute bn:00100895a numeric
+@attribute bn:00084331v numeric
+@attribute bn:00047172n numeric
+@attribute bn:00114535r numeric
+@attribute bn:00022996n numeric
+@attribute bn:00003095n numeric
+@attribute bn:00099558a numeric
+@attribute bn:03149538n numeric
+@attribute bn:00097846a numeric
+@attribute bn:00102850a numeric
+@attribute bn:00098274a numeric
+@attribute bn:00054126n numeric
+@attribute bn:00107825a numeric
+@attribute bn:00004605n numeric
+@attribute target {0,1}
+
+@data
+testJavier/_ham_/12.tsms,25,1,2,8,3,2,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+testJavier/_ham_/20.tsms,30,0.999807,2,5,2,2,0,0,0,1,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+testJavier/_ham_/18.tsms,36,0.999995,3,9,3,3,0,0,0,0,1,1,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+testJavier/_ham_/14.tsms,31,0.999995,2,7,3,2,0,0,0,0,0,0,1,1,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+testJavier/_ham_/13.tsms,58,0.999997,2,12,4,3,0,0,0,0,0,0,0,0,1,1,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+testJavier/_ham_/19.tsms,28,0.647578,2,4,2,2,0,0,0,0,0,0,0,0,0,0,1,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+testJavier/_ham_/10.tsms,16,0.999984,1,5,2,2,-0.5,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+testJavier/_ham_/17.tsms,24,0.999995,2,4,2,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+testJavier/_ham_/16.tsms,23,0.952319,2,4,2,2,0,0,0,0,0,0,0,0,0,0,0,0,1,0,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+testJavier/_ham_/11.tsms,15,0.801597,2,5,2,2,-0.62,0,0,0,0,0,0,0,0,0,0,0,0,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+testJavier/_ham_/15.tsms,32,0.999999,2,7,2,3,-0.75,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+testJavier/_spam_/7.tsms,27,0.994974,2,6,3,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,1
+testJavier/_spam_/5.tsms,38,0.999995,3,7,3,2,0.5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,1
+testJavier/_spam_/9.tsms,26,0.999926,1,5,3,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1
+testJavier/_spam_/3.tsms,34,0.989601,2,6,3,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,2,1
+testJavier/_spam_/2.tsms,69,0.999996,2,13,6,2,0.75,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,0,0,0,0,1,1,0,0,4,1
+testJavier/_spam_/6.tsms,34,0.840906,2,6,3,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1
+testJavier/_spam_/4.tsms,38,0.998375,2,4,3,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,1,0,1
+testJavier/_spam_/8.tsms,31,0.840358,1,5,4,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,1
+testJavier/_spam_/1.tsms,51,0.999997,1,9,4,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,1,0,0,0,0,1,1

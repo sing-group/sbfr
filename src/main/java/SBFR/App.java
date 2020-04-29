@@ -24,7 +24,6 @@ import it.uniroma1.lcl.babelnet.data.BabelPointer;
 import it.uniroma1.lcl.jlt.util.Language;
 import it.uniroma1.lcl.babelnet.*;*/
 
-import java.io.BufferedWriter;
 
 /*import org.bdp4j.*;
 
@@ -33,17 +32,6 @@ import weka.classifiers.bayes.NaiveBayes;
 import weka.core.Instances;
 import weka.knowledgeflow.StepOutputListener;*/
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-//import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-/*import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;*/
 import java.util.*;
 
 /**
@@ -57,85 +45,11 @@ public class App
     static BabelNet bn = BabelNet.getInstance();
     //Map used to save the hypernyms to which synset pairs will generalize
     static Map<String, String> generalizeTo = new HashMap<String, String>(); 
+    static Map<String, String> auxGeneralizeTo = new HashMap<String, String>();
     //Max relationship degree that we will admit 
     static int maxDegree = 2;
-
-    /**
-     * 
-     * ESP: Para guardar el mapa de los synsets y sus hiperónimos en el disco
-     * ENG: Saves a map containing synsets and their hypernyms in a file
-     * 
-     * @param mapOfHypernyms Map containing every synset (key) and a list of its hypernyms (values)
-    */
-	public static void saveMap(Map<String, List<String>> mapOfHypernyms){
-		try{
-			File fileOne=new File("outputsyns_youtube_old.map");
-			FileOutputStream fos=new FileOutputStream(fileOne);
-			ObjectOutputStream oos=new ObjectOutputStream(fos);
-
-			oos.writeObject(mapOfHypernyms);
-			oos.flush();
-			oos.close();
-			fos.close();
-		}catch(Exception e){}
-    }
-
-    /** 
-     * 
-     * ESP: Lee desde disco un archivo ".map" de tipo <String, List<String>>
-     * ENG: Reads a ".map" file from disk with type <String, List<String>> 
-     *
-     * @return A map containing every synset (key) and a list of its hypernyms (values)
-     */
-	public static Map<String , List<String>> read() {
-        try{
-            //Poner aquí el nombre del fichero a cargar. Extensión ".map"
-             File toRead=new File("outputsyns_youtube_old.map");
-             if (!toRead.exists()){
-                return new HashMap<>();
-             }
-             FileInputStream fis=new FileInputStream(toRead);
-             ObjectInputStream ois=new ObjectInputStream(fis);
- 
-             HashMap<String,List<String>> mapInFile=(HashMap<String,List<String>>)ois.readObject();
- 
-             ois.close();
-             fis.close();
-             //print All data in MAP
-             return mapInFile;
-        }catch(Exception e){}
-            return null;
-    }
-
-    /**
-     * ESP: Guarda un mapa del tipo <String, String> en formato txt
-     * ENG: Saves a <String, String>-type map to txt file
-     * 
-     * @param toWrite the map to save as txt file
-     */
-    public static void hashMapToTxtFile(Map<String, List<String>> toWrite){
-        String outputFilePath = "generalizedSynsets_" + maxDegree + ".txt";
-
-        File file = new File(outputFilePath);
-        BufferedWriter bf = null;
-
-        try{
-            bf = new BufferedWriter(new FileWriter(file));
-
-            for(Map.Entry<String, List<String>> entry: toWrite.entrySet()){
-                bf.write(entry.getKey() + " : " + entry.getValue());
-                bf.newLine();
-            }
-
-            bf.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try{
-                bf.close();
-            } catch (Exception e){}
-        }
-    }
+    static Map<String, List<String>> cachedHypernyms;
+    static boolean keepGeneralizing;
 
     /**
      * 
@@ -161,9 +75,174 @@ public class App
             }
         }
 
-        saveMap(cachedBabelUtils.getMapOfHypernyms());
-		System.out.println("Saved elements: " + cachedBabelUtils.getMapOfHypernyms().size());
+        save_read_files.saveMap(cachedBabelUtils.getMapOfHypernyms());
+		//System.out.println("Saved elements: " + cachedBabelUtils.getMapOfHypernyms().size());
         
+    }
+
+    public static void addNewCachedSynset(Map<String, List<String>> cachedHypernyms, String synset){
+        CachedBabelUtils cachedBabelUtils = new CachedBabelUtils(cachedHypernyms);
+
+        if(!cachedBabelUtils.existsSynsetInMap(synset)){
+            cachedBabelUtils.addSynsetToCache(synset, BabelUtils.getDefault().getAllHypernyms(synset));
+            System.out.println("Adding "+ synset);
+
+            for(String h: cachedBabelUtils.getCachedSynsetHypernymsList(synset)){
+                if(!cachedBabelUtils.existsSynsetInMap(h)){
+                    cachedBabelUtils.addSynsetToCache(h, BabelUtils.getDefault().getAllHypernyms(h));
+                }
+            }
+        }
+
+        save_read_files.saveMap(cachedBabelUtils.getMapOfHypernyms());
+    }
+
+    /**
+     * 
+     * @param arr the array to sort
+     * @param begin the index from which we will be sorting
+     * @param end the index of the final element we will be sorting
+     * @return
+     */
+    public static String[] quickSort(String[] arr, int begin, int end){
+        if(begin < end){
+            int partitionIndex = partition(arr, begin, end);
+
+            quickSort(arr, begin, partitionIndex - 1);
+            quickSort(arr, partitionIndex + 1, end);
+        }
+        return arr;
+    }
+
+    /**
+     * 
+     * @param arr
+     * @param begin
+     * @param end
+     * @return
+     */
+    private static int partition(String[] arr, int begin, int end){
+        String pivot = arr[end];
+        int i = begin - 1;
+
+        for(int j = begin; j < end; j++){
+            if(cachedHypernyms.get(arr[j]).size() >= cachedHypernyms.get(pivot).size()){
+                i++;
+
+                String swapTemp = arr[i];
+                arr[i] = arr[j];
+                arr[j] = swapTemp;
+            }
+        }
+
+        String swapTemp = arr[i+1];
+        arr[i+1] = arr[end];
+        arr[end] = swapTemp;
+        
+        return i+1;
+    }
+
+    /**
+     * 
+     * @param synset the synset from which we want to get its hypernyms
+     * @return list of its hypernyms
+     */
+    private static List<String> getHypernyms(String synset){
+        List<String> toRet;
+        
+        if(cachedHypernyms.keySet().contains(synset)){    
+            toRet = cachedHypernyms.get(synset);
+        }else{
+            addNewCachedSynset(cachedHypernyms, synset);
+            cachedHypernyms = save_read_files.read();
+            toRet = cachedHypernyms.get(synset);
+        }
+
+        return toRet;
+    }
+
+    /**
+     * 
+     * @param synsetList
+     * @param originalDataset
+     */
+    public static Dataset generalizeDirectly(List<String> synsetList, Dataset originalDataset){
+        List<String> usedSynsets = new ArrayList<String>();
+        for(String s1: synsetList){
+            int index = synsetList.indexOf(s1);
+
+            //Evaluate ham/spam %
+            String expressionS1 = "(" + s1 + " >= 1) ? 1 : 0";
+            Map<String, Integer> result1 = originalDataset.evaluateColumns(expressionS1,
+                int.class, 
+                new String[]{s1}, 
+                new Class[]{double.class}, 
+                "target");
+            float ham1 = (float) result1.get("0");
+            float spam1 = (float) result1.get("1");
+            float percentage1 = (spam1/(ham1 + spam1));
+
+            if(percentage1 >= 0.99 || percentage1 <= 0.01){
+                for(String s2: synsetList.subList(index + 1, synsetList.size())){
+                    //Get hypernym list of both synsets
+                    List<String> s1Hypernyms = getHypernyms(s1);
+                    List<String> s2Hypernyms = getHypernyms(s2);
+
+                    if(s2Hypernyms.contains(s1) || s1Hypernyms.contains(s2)){
+                        String expressionS2 = "(" + s2 + " >= 1) ? 1 : 0";
+                
+                        Map<String, Integer> result2 = originalDataset.evaluateColumns(expressionS2,
+                            int.class, 
+                            new String[]{s2}, 
+                            new Class[]{double.class}, 
+                            "target");
+                        
+                        float ham2 = (float) result2.get("0");
+                        float spam2 = (float) result2.get("1");
+                        float percentage2 = (spam2/(ham2 + spam2));
+
+                        int degree = relationshipDegree(s1, s2, s1Hypernyms, s2Hypernyms);
+
+                        if((percentage2 >= 0.99 && percentage1 >= 0.99) || (percentage2 <= 0.01 && percentage1 <= 0.01)){
+                            if(s1Hypernyms.contains(s2) && degree <= maxDegree && degree >= 0){
+                                List<String> listAttributeNameToJoin = new ArrayList<String>();
+                                Boolean aux = usedSynsets.contains(s2);
+
+                                generalizeTo.put(s1, s2);
+                                
+                                listAttributeNameToJoin.add(s1);
+                                listAttributeNameToJoin.add(s2);
+                                originalDataset.joinAttributes(listAttributeNameToJoin, s2, Dataset.COMBINE_SUM, !aux);
+
+                                if(!usedSynsets.contains(s1))
+                                    usedSynsets.add(s1);
+
+                                break; 
+                            }
+                            else if(s2Hypernyms.contains(s1) && degree <= maxDegree && degree >= 0){
+                                List<String> listAttributeNameToJoin = new ArrayList<String>();
+                                Boolean aux = usedSynsets.contains(s1);
+                                
+                                generalizeTo.put(s2, s1);
+                                listAttributeNameToJoin.add(s2);                                
+                                listAttributeNameToJoin.add(s1);
+                                originalDataset.joinAttributes(listAttributeNameToJoin, s1, Dataset.COMBINE_SUM, !aux);
+                                
+                                keepGeneralizing = true;
+
+                                if(!usedSynsets.contains(s2))
+                                    usedSynsets.add(s2);
+                                
+                                break;
+                            }
+                        }
+                    }
+                        
+                }
+            }
+        }
+        System.out.println("");
+        return originalDataset;
     }
 
     /**
@@ -188,13 +267,13 @@ public class App
         String s1 = s1Hypernyms.get(0);
 
         if (s1 == synset2){
-            
-            generalizeTo.put(synset1, s1);
+            //if(generalizeTo.get(synset1) == null)
+                auxGeneralizeTo.put(synset1, s1);
 
             return 1;
         } else if (s2Hypernyms.contains(s1)) {
-
-            generalizeTo.put(synset1, s1);
+            //if(generalizeTo.get(synset1) == null)
+                auxGeneralizeTo.put(synset1, s1);
 
             return s2Hypernyms.indexOf(s1); 
         } else {
@@ -220,7 +299,6 @@ public class App
         Map<String, List<String>> finalResult = new HashMap<String, List<String>>();
         List<String> usedSynsets = new ArrayList<String>();
         for(String s1: synsetList){
-            List<String> s1Hypernyms = cachedHypernyms.get(s1);
  
             //We get the index of the synset
             int index = synsetList.indexOf(s1);
@@ -241,8 +319,10 @@ public class App
                 System.out.println("Synset 1: " + s1 + " -> " + result1 + " -> " + percentage1);
                 //Iterate through a sublist of the original synset that contains only from the next synset to s1 onwards
                 for (String s2: synsetList.subList(index + 1, synsetList.size())){
-                    List<String> s2Hypernyms = cachedHypernyms.get(s2);
                     
+                    List<String> s1Hypernyms = getHypernyms(s1);
+                    List<String> s2Hypernyms = getHypernyms(s2);
+
                     int degree = relationshipDegree(s1, s2, s1Hypernyms, s2Hypernyms);
 
                     if (degree >= 0 && degree <= maxDegree && !usedSynsets.contains(s2) && !finalResult.containsKey(s1)) {
@@ -261,9 +341,12 @@ public class App
                             //Results from evaluating these synsets
                             System.out.print("Synset 1: " + s1 + " -> " + result1);
                             System.out.println(" Synset 2: "+ s2 + " -> " + result2);
-                            
+
+                            generalizeTo.put(s1, auxGeneralizeTo.get(s1)); 
                             usedSynsets.add(s2);
                             s2List.add(s2);
+
+                            keepGeneralizing = true;
                         }
                     }
                 }
@@ -273,7 +356,7 @@ public class App
                 finalResult.put(s1, s2List);
             }
         }
-
+        System.out.println("");
         return finalResult;
     }
 
@@ -287,14 +370,20 @@ public class App
      * @return the originalDataset modified and reduced according to the generalizable synsets
      */
     public static Dataset generalize(Dataset originalDataset, Map<String, List<String>> toGeneralize){
+        System.out.println("Entro");
+        List<String> synsetList = originalDataset.filterColumnNames("^bn:");
         for (String s1 : toGeneralize.keySet()){
+            System.out.println("Esta en el for. Synset: "+ s1);
             List<String> listAttributeNameToJoin = toGeneralize.get(s1);
             String newAttributeName = generalizeTo.get(s1);
-
+            System.out.println("Nuevo nombre de atributo: "+ newAttributeName);
             listAttributeNameToJoin.add(s1);
-            originalDataset.joinAttributeColumns(listAttributeNameToJoin, newAttributeName, Dataset.COMBINE_SUM);
+            System.out.println("Lista a reducir: "+ listAttributeNameToJoin);
+            originalDataset.joinAttributes(listAttributeNameToJoin, newAttributeName, Dataset.COMBINE_SUM, synsetList.contains(newAttributeName));
+            System.out.println("");
         }
 
+        System.out.println("Número de atributos: "+ originalDataset.numAttributes());
         return originalDataset;
     }
 
@@ -314,7 +403,7 @@ public class App
         transformersList.put("target", new Enum2IntTransformer(targetValues));
 
         //Create Dataset
-        String filePath = "ultimo_outputsyns_100.csv";
+        String filePath = "outputsyns_testJavier_85227.csv";
         CSVDatasetReader fileDataSet = new CSVDatasetReader(filePath, transformersList);
         Dataset originalDataset = fileDataSet.loadFile();        
         System.out.println("Dataset cargado");
@@ -322,26 +411,58 @@ public class App
         //Filter Dataset columns
         List<String> synsetList = originalDataset.filterColumnNames("^bn:");
 
-        //System.out.println("Synset original: "+ synsetList);
+        System.out.println("Synset original: "+ synsetList.size());
 
         //Create a file that stores all the hypernyms on a map
-        Map<String, List<String>> cachedHypernyms = read(); 
+        cachedHypernyms = save_read_files.read(); 
         createCache(cachedHypernyms, synsetList);  
-        cachedHypernyms = read();
-        
+        cachedHypernyms = save_read_files.read();
 
-        Map<String, List<String>> toGeneralize = evaluate(originalDataset, synsetList, cachedHypernyms);
-        int numberOfGeneralizedSynsets = 0;
-        for (String s1: toGeneralize.keySet()){
-            numberOfGeneralizedSynsets = numberOfGeneralizedSynsets + 1 + toGeneralize.get(s1).size();
-        }
-        System.out.println(numberOfGeneralizedSynsets);
-        hashMapToTxtFile(toGeneralize);
+        Map<String, List<String>> toGeneralize = new HashMap<String, List<String>>();
 
-        originalDataset = generalize(originalDataset, toGeneralize);
+        do{
+            keepGeneralizing = false;
+
+            String[] arr = quickSort(synsetList.toArray(new String[0]), 0, synsetList.toArray().length - 1);
+            synsetList = Arrays.asList(arr);
+
+            originalDataset = generalizeDirectly(synsetList, originalDataset);
+            synsetList = originalDataset.filterColumnNames("^bn:");
+
+            /*Map<String, List<String>> evaluateResult = evaluate(originalDataset, synsetList, cachedHypernyms);
+            for (String s: evaluateResult.keySet()){
+                toGeneralize.put(s, evaluateResult.get(s));
+            }*/
+            
+            toGeneralize.putAll(evaluate(originalDataset, synsetList, cachedHypernyms));
+            /*int numberOfGeneralizedSynsets = 0;
+            for (String s1: toGeneralize.keySet()){
+                numberOfGeneralizedSynsets = numberOfGeneralizedSynsets + 1 + toGeneralize.get(s1).size();
+            }*/
+            //System.out.println(numberOfGeneralizedSynsets);
+            //System.out.println(generalizeTo);
+
+            originalDataset = generalize(originalDataset, toGeneralize);
+            synsetList = originalDataset.filterColumnNames("^bn:");
+
+        }while(keepGeneralizing);
+
         originalDataset.setOutputFile("relationshipDegree_" + maxDegree + ".csv");
         originalDataset.generateCSV();
         String arff = originalDataset.generateARFFWithComments(null, "relationshipDegree_" + maxDegree + ".arff");
+
+        save_read_files.hashMapToTxtFile(toGeneralize /*cachedHypernyms*/);
+        save_read_files.hashMapToTxtFile2(generalizeTo);
+        /*for(String s: cachedHypernyms.keySet()){
+            System.out.println("Synset: " + s);
+            System.out.println("Number of hypernyms: "+ cachedHypernyms.get(s).size() +"\n");
+        }*/
+
+        /*String[] arr = quickSort(synsetList.toArray(new String[0]), 0, synsetList.toArray().length - 1);
+        for(int i = 0; i < arr.length; i++){
+            System.out.println("Synset: " + arr[i]);
+            System.out.println("Number of hypernyms: "+ cachedHypernyms.get(arr[i]).size() +"\n");
+        }*/
 
         long endTime = System.currentTimeMillis();
         System.out.println("Execution time in milliseconds: " + (endTime - startTime));
