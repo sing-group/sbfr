@@ -1,9 +1,0 @@
-Generalize to synset: bn:00033982n
-List of generalized synsets: [bn:00010309n, bn:00016606n, bn:00010309n, bn:00010309n, bn:00033982n]
-
-Generalize to synset: bn:00004433n
-List of generalized synsets: [bn:00030950n, bn:00058006n, bn:00026191n, bn:00059945n, bn:00030950n, bn:00030950n, bn:00004433n, bn:00030950n]
-
-Generalize to synset: bn:00010309n
-List of generalized synsets: [bn:00049156n, bn:00033987n, bn:00049156n, bn:00049156n, bn:00049156n]
-
