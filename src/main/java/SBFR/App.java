@@ -32,6 +32,7 @@ import weka.classifiers.bayes.NaiveBayes;
 import weka.core.Instances;
 import weka.knowledgeflow.StepOutputListener;*/
 
+import javafx.util.*;
 import java.util.*;
 
 /**
@@ -50,6 +51,8 @@ public class App
     static int maxDegree = 2;
     static Map<String, List<String>> cachedHypernyms;
     static boolean keepGeneralizing;
+    static Map<Pair<String, String>, Integer> degreeMap = new HashMap<Pair<String, String>, Integer>();
+    static Map<String, List<String>> toGeneralizePrint = new HashMap<String, List<String>>();
 
     /**
      * 
@@ -181,6 +184,7 @@ public class App
             float ham1 = (float) result1.get("0");
             float spam1 = (float) result1.get("1");
             float percentage1 = (spam1/(ham1 + spam1));
+            System.out.println("Synset 1: " + s1 + " -> " + result1 + " -> " + percentage1);
 
             if(percentage1 >= 0.99 || percentage1 <= 0.01){
                 for(String s2: synsetList.subList(index + 1, synsetList.size())){
@@ -201,17 +205,28 @@ public class App
                         float spam2 = (float) result2.get("1");
                         float percentage2 = (spam2/(ham2 + spam2));
 
-                        int degree = relationshipDegree(s1, s2, s1Hypernyms, s2Hypernyms);
+                        Pair<String, String> pair = new Pair<String, String>(s1, s2);
+
+                        if(!degreeMap.containsKey(pair)){
+                            int degree = relationshipDegree(s1, s2, s1Hypernyms, s2Hypernyms); 
+                            degreeMap.put(pair, degree);
+                        }
 
                         if((percentage2 >= 0.99 && percentage1 >= 0.99) || (percentage2 <= 0.01 && percentage1 <= 0.01)){
-                            if(s1Hypernyms.contains(s2) && degree <= maxDegree && degree >= 0){
+                            if(s1Hypernyms.contains(s2) && degreeMap.get(pair) <= maxDegree && degreeMap.get(pair) >= 0){
                                 List<String> listAttributeNameToJoin = new ArrayList<String>();
                                 Boolean aux = usedSynsets.contains(s2);
-
+                                System.out.print("Synset 1: " + s1 + " -> " + result1);
+                                System.out.println(" Synset 2: "+ s2 + " -> " + result2);
                                 generalizeTo.put(s1, s2);
+                                
+                                List<String> auxPrint = new ArrayList<String>();
+                                auxPrint.add(s2);
+                                toGeneralizePrint.put(s1, auxPrint);
                                 
                                 listAttributeNameToJoin.add(s1);
                                 listAttributeNameToJoin.add(s2);
+
                                 originalDataset.joinAttributes(listAttributeNameToJoin, s2, Dataset.COMBINE_SUM, !aux);
 
                                 if(!usedSynsets.contains(s1))
@@ -219,13 +234,20 @@ public class App
 
                                 break; 
                             }
-                            else if(s2Hypernyms.contains(s1) && degree <= maxDegree && degree >= 0){
+                            else if(s2Hypernyms.contains(s1) && degreeMap.get(pair) <= maxDegree && degreeMap.get(pair) >= 0){
                                 List<String> listAttributeNameToJoin = new ArrayList<String>();
                                 Boolean aux = usedSynsets.contains(s1);
-                                
+                                System.out.print("Synset 1: " + s1 + " -> " + result1);
+                                System.out.println(" Synset 2: "+ s2 + " -> " + result2);
                                 generalizeTo.put(s2, s1);
+
+                                List<String> auxPrint = new ArrayList<String>();
+                                auxPrint.add(s1);
+                                toGeneralizePrint.put(s2, auxPrint);
+                                
                                 listAttributeNameToJoin.add(s2);                                
                                 listAttributeNameToJoin.add(s1);
+
                                 originalDataset.joinAttributes(listAttributeNameToJoin, s1, Dataset.COMBINE_SUM, !aux);
                                 
                                 keepGeneralizing = true;
@@ -323,9 +345,14 @@ public class App
                     List<String> s1Hypernyms = getHypernyms(s1);
                     List<String> s2Hypernyms = getHypernyms(s2);
 
-                    int degree = relationshipDegree(s1, s2, s1Hypernyms, s2Hypernyms);
+                    Pair<String, String> pair = new Pair<String, String>(s1, s2);
 
-                    if (degree >= 0 && degree <= maxDegree && !usedSynsets.contains(s2) && !finalResult.containsKey(s1)) {
+                    if(!degreeMap.containsKey(pair)){
+                        int degree = relationshipDegree(s1, s2, s1Hypernyms, s2Hypernyms); 
+                        degreeMap.put(pair, degree);
+                    }
+
+                    if (degreeMap.get(pair) >= 0 && degreeMap.get(pair) <= maxDegree && !usedSynsets.contains(s2) && !finalResult.containsKey(s1)) {
                         String expressionS2 = "(" + s2 + " >= 1) ? 1 : 0";
         
                         Map<String, Integer> result2 = originalDataset.evaluateColumns(expressionS2,
@@ -371,19 +398,28 @@ public class App
      */
     public static Dataset generalize(Dataset originalDataset, Map<String, List<String>> toGeneralize){
         System.out.println("Entro");
-        List<String> synsetList = originalDataset.filterColumnNames("^bn:");
+        
         for (String s1 : toGeneralize.keySet()){
             System.out.println("Esta en el for. Synset: "+ s1);
-            List<String> listAttributeNameToJoin = toGeneralize.get(s1);
+
+            List<String> listAttributeNameToJoin = new ArrayList<String>();
+            listAttributeNameToJoin.addAll(toGeneralize.get(s1));
             String newAttributeName = generalizeTo.get(s1);
+
             System.out.println("Nuevo nombre de atributo: "+ newAttributeName);
+
             listAttributeNameToJoin.add(s1);
+
             System.out.println("Lista a reducir: "+ listAttributeNameToJoin);
+
+            List<String> synsetList = originalDataset.filterColumnNames("^bn:");
             originalDataset.joinAttributes(listAttributeNameToJoin, newAttributeName, Dataset.COMBINE_SUM, synsetList.contains(newAttributeName));
+            
             System.out.println("");
         }
 
-        System.out.println("Número de atributos: "+ originalDataset.numAttributes());
+        System.out.println("Número de atributos: "+ originalDataset.filterColumnNames("^bn:").size());
+
         return originalDataset;
     }
 
@@ -403,7 +439,7 @@ public class App
         transformersList.put("target", new Enum2IntTransformer(targetValues));
 
         //Create Dataset
-        String filePath = "outputsyns_testJavier_85227.csv";
+        String filePath = /*"outputsyns_testJavier_85227.csv"*/"ultimo_outputsyns_100.csv";
         CSVDatasetReader fileDataSet = new CSVDatasetReader(filePath, transformersList);
         Dataset originalDataset = fileDataSet.loadFile();        
         System.out.println("Dataset cargado");
@@ -415,8 +451,10 @@ public class App
 
         //Create a file that stores all the hypernyms on a map
         cachedHypernyms = save_read_files.read(); 
+        System.out.println("CachedHypernyms leido 1");
         createCache(cachedHypernyms, synsetList);  
         cachedHypernyms = save_read_files.read();
+        System.out.println("CachedHypernyms leido 1");
 
         Map<String, List<String>> toGeneralize = new HashMap<String, List<String>>();
 
@@ -425,9 +463,11 @@ public class App
 
             String[] arr = quickSort(synsetList.toArray(new String[0]), 0, synsetList.toArray().length - 1);
             synsetList = Arrays.asList(arr);
+            System.out.println("Synsets ordenados");
 
             originalDataset = generalizeDirectly(synsetList, originalDataset);
             synsetList = originalDataset.filterColumnNames("^bn:");
+            System.out.println("Synsets generalizados directamente");
 
             /*Map<String, List<String>> evaluateResult = evaluate(originalDataset, synsetList, cachedHypernyms);
             for (String s: evaluateResult.keySet()){
@@ -435,6 +475,9 @@ public class App
             }*/
             
             toGeneralize.putAll(evaluate(originalDataset, synsetList, cachedHypernyms));
+            for(String s: toGeneralize.keySet())
+                toGeneralizePrint.put(s, toGeneralize.get(s));
+            System.out.println();
             /*int numberOfGeneralizedSynsets = 0;
             for (String s1: toGeneralize.keySet()){
                 numberOfGeneralizedSynsets = numberOfGeneralizedSynsets + 1 + toGeneralize.get(s1).size();
@@ -443,7 +486,12 @@ public class App
             //System.out.println(generalizeTo);
 
             originalDataset = generalize(originalDataset, toGeneralize);
+            System.out.println("Synsets generalizados");
+
+            
             synsetList = originalDataset.filterColumnNames("^bn:");
+
+            toGeneralize.clear();
 
         }while(keepGeneralizing);
 
@@ -451,6 +499,13 @@ public class App
         originalDataset.generateCSV();
         String arff = originalDataset.generateARFFWithComments(null, "relationshipDegree_" + maxDegree + ".arff");
 
+        for(String s: toGeneralizePrint.keySet()){
+            System.out.println("Clave: "+ s);
+            System.out.println("Lista: "+ toGeneralizePrint.get(s));
+            System.out.println("");
+        }
+
+        toGeneralize = toGeneralizePrint;
         save_read_files.hashMapToTxtFile(toGeneralize /*cachedHypernyms*/);
         save_read_files.hashMapToTxtFile2(generalizeTo);
         /*for(String s: cachedHypernyms.keySet()){

@@ -20,3 +20,16 @@ Thumbs.db
 venv
 node_modules
 .sass-cache
+
+cachedHypernyms.txt
+generalizedSynsets_2.txt
+generalizedSynsets_3.txt
+generalizeTo_2.txt
+generalizeTo_3.txt
+CSVDataset.csv
+outputsyns_youtube_old.map
+relationshipDegree_2.arff
+relationshipDegree_2.csv
+relationshipDegree_3.arff
+relationshipDegree_3.csv
+
