@@ -48,7 +48,7 @@ public class App
     static Map<String, String> generalizeTo = new HashMap<String, String>(); 
     static Map<String, String> auxGeneralizeTo = new HashMap<String, String>();
     //Max relationship degree that we will admit 
-    static int maxDegree = 2;
+    static int maxDegree = 5;
     static Map<String, List<String>> cachedHypernyms;
     static boolean keepGeneralizing;
     static Map<Pair<String, String>, Integer> degreeMap = new HashMap<Pair<String, String>, Integer>();
@@ -369,7 +369,10 @@ public class App
                             System.out.print("Synset 1: " + s1 + " -> " + result1);
                             System.out.println(" Synset 2: "+ s2 + " -> " + result2);
 
-                            generalizeTo.put(s1, auxGeneralizeTo.get(s1)); 
+
+                            if(s1Hypernyms.indexOf(generalizeTo.get(s1)) <= s1Hypernyms.indexOf(auxGeneralizeTo.get(s1)))
+                                generalizeTo.put(s1, auxGeneralizeTo.get(s1)); 
+                                
                             usedSynsets.add(s2);
                             s2List.add(s2);
 
@@ -499,11 +502,12 @@ public class App
         originalDataset.generateCSV();
         String arff = originalDataset.generateARFFWithComments(null, "relationshipDegree_" + maxDegree + ".arff");
 
+        /*
         for(String s: toGeneralizePrint.keySet()){
             System.out.println("Clave: "+ s);
             System.out.println("Lista: "+ toGeneralizePrint.get(s));
             System.out.println("");
-        }
+        }*/
 
         toGeneralize = toGeneralizePrint;
         save_read_files.hashMapToTxtFile(toGeneralize /*cachedHypernyms*/);
