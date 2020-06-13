@@ -1,6 +1,4 @@
-package SBFR;
-
-import java.util.stream.Collectors;
+package org.SBFR;
 
 import org.bdp4j.dataset.CSVDatasetReader;
 
@@ -38,7 +36,7 @@ public class App
         transformersList.put("target", new Enum2IntTransformer(targetValues));
 
         //Create Dataset
-        String filePath = "outputsyns_testJavier_85227.csv"/*"ultimo_outputsyns_100.csv"*/;
+        String filePath = "dataset.csv";
         CSVDatasetReader fileDataSet = new CSVDatasetReader(filePath, transformersList);
         Dataset originalDataset = fileDataSet.loadFile();        
         System.out.println("Dataset cargado");

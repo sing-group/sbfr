@@ -1,10 +1,9 @@
-package SBFR;
+package org.SBFR;
 
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 import org.junit.Test;
@@ -13,9 +12,7 @@ import org.nlpa.util.BabelUtils;
 import it.uniroma1.lcl.babelnet.BabelNet;
 import it.uniroma1.lcl.babelnet.BabelSynset;
 import it.uniroma1.lcl.babelnet.BabelSynsetID;
-import it.uniroma1.lcl.babelnet.BabelSynsetRelation;
 import it.uniroma1.lcl.babelnet.data.BabelPointer;
-import it.uniroma1.lcl.jlt.util.Language;
 
 
 /**

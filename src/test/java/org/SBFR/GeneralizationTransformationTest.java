@@ -1,4 +1,4 @@
-package SBFR;
+package org.SBFR;
 
 import org.bdp4j.types.Dataset;
 import org.junit.Before;

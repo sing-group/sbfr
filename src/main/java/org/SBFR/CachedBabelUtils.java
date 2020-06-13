@@ -1,7 +1,6 @@
-package SBFR;
+package org.SBFR;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
